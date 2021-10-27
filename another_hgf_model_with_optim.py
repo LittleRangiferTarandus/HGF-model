@@ -148,7 +148,7 @@ class optim:
         #generate a new x in the neighboorhood of x by transform function
         
         while True:
-          xNew=[x[0]+np.random.uniform(low=-0.0055,high=+0.0055)*T,x[1]+np.random.uniform(low=-0.0055,high=+0.0055)*T]
+          xNew=[x[0]+np.random.uniform(low=-0.001,high=+0.001)*T,x[1]+np.random.uniform(low=-0.001,high=+0.001)*T]
 
           try:#防止随机出一些越界的变量x，例如math.log和math.exp越界
             yNew=opt.parameterUpdate(xNew[0],xNew[1])
@@ -178,6 +178,9 @@ class optim:
       t+=1
       T=10/(1+t)
     return {"x":x,"y":opt.parameterUpdate(x[0],x[1])}
+ 
+
+
 
 if __name__ == '__main__':
 

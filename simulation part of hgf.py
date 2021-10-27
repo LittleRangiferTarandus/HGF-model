@@ -54,85 +54,87 @@ class HGF:
     self.kappa=(kappa)
     self.omega=omega
     
-    self.miu3 = []
-    self.miu2 = []
-    self.miu3.append(0)
-    self.miu2.append(0) #
-    
-    self.sigma2=[]
-    self.sigma2.append(1)#同上，
+    self.muhat=np.full((3,len(rawData)), np.nan)
+    self.pihat=np.full((3,len(rawData)), np.nan)
+    self.sigmahat=np.full((3,len(rawData)), np.nan)
+    self.mu=np.full((3,len(rawData)), np.nan)
+    self.pi=np.full((3,len(rawData)), np.nan)
+    self.sigma=np.full((3,len(rawData)), np.nan)
+    self.delta=np.full((3,len(rawData)), np.nan)
+    self.r=np.full((3,len(rawData)), np.nan)
+    self.w=np.full((3,len(rawData)), np.nan)
 
-    self.miu1P=[]
-    self.miu1P.append(1) #同上
+    self.initialize()
+  def initialize(self):
+    self.muhat[0,0] = 1
+    self.mu[0,0] = 0
+    self.mu[1,0] = 0
+    self.mu[2,0] = 0
+    self.sigma[1,0] = 1
+    self.sigma[2,0] = 1
 
-    self.sigma3=[]
-    self.sigma3.append(1) #同上
+  def update(self):
+    for k in range(1,len(rawData)):
+      self.mu[0,k] = rawData[k]
+
+      #level 2
+      #-sigma2
+      #--sigma2hat&pi2hat
+      self.sigmahat[1,k] = self.sigma[1,k-1]+math.exp(self.kappa*self.mu[2,k-1]+self.omega)
+      self.pihat[1,k] = 1/self.sigmahat[1,k]
+      #--sigma1hat
+      #---mu1hat
+      self.muhat[0,k] = sigmoid(self.mu[1,k-1])
+      #--sigma1hat&pi1hat
+      self.sigmahat[0,k] = self.muhat[0,k-1]*(1-self.muhat[0,k-1])
+      self.pihat[0,k] = np.inf if(self.sigmahat[0,k]==0) else 1/self.sigmahat[0,k]
+      #-sigma2&pi2
+      self.sigma[1,k] = 1/(1/self.sigmahat[1,k]+self.sigmahat[0,k])
+      self.pi[1,k] = 1/self.sigma[1,k]
+      #-mu2
+      #--delta1
+      self.delta[0,k] = self.mu[0,k] - self.muhat[0,k]
+      #-mu2
+      self.mu[1,k] = self.mu[1,k-1] + self.sigma[1,k]*self.delta[0,k]
+
+      #level 3
+      #-sigma3&pi3
+      #--sigma3hat&pi3hat
+      self.pihat[2,k] = 1/(self.sigma[2,k-1]+self.theta)
+      self.sigmahat[2,k] = 1/self.pihat[2,k]
+      #--w2
+      self.w[1,k] = math.exp(self.kappa*self.mu[2,k-1]+self.omega)/(self.sigma[1,k-1]+math.exp(self.kappa*self.mu[2,k-1]+self.omega))
+      #--r2
+      self.r[1,k] = (math.exp(self.kappa*self.mu[2,k-1]+self.omega)-self.sigma[1,k-1])/(self.sigma[1,k-1]+math.exp(self.kappa*self.mu[2,k-1]+self.omega))
+      #--delta2
+      self.delta[1,k] = (self.sigma[1,k]+(self.mu[1,k]-self.mu[1,k-1])**2)/(self.sigma[1,k-1]+math.exp(self.kappa*self.mu[2,k-1]+self.omega))-1
+      #-pi3&sigma3
+      self.pi[2,k] = self.pihat[2,k] + self.kappa**2/2 * self.w[1,k]*(self.w[1,k]+self.r[1,k]*self.delta[1,k])
+      self.sigma[2,k] = 1/self.pi[2,k]
+      #-mu3
+      self.mu[2,k] = self.mu[2,k-1] + self.sigma[2,k] * self.kappa/2 *self.w[1,k] *self.delta[1,k]
 
 
-    self.step = 1
-
-  def miu3Update(self):
-    kappa = self.kappa
-
-    tempVal = math.exp(kappa*self.miu3[self.step-1]+self.omega)
-
-    w2 = tempVal/(self.sigma2[self.step-1]+tempVal)
-
-    delta2 = (self.sigma2[self.step]+(self.miu2[self.step]-self.miu2[self.step-1])**2)/(self.sigma2[self.step-1]+tempVal)-1
-
-    #update the sigma3 list
-    #pi3P
-    pi3P = 1/(self.sigma3[self.step-1]+self.theta)
-    #r2
-    r2 =( tempVal-self.sigma2[self.step-1])/(self.sigma2[self.step-1]+tempVal)
-
-    #pi3
-    pi3 = pi3P+kappa**2/2*w2*(w2+r2*delta2)
-    
-    tempSigma3 = 1/pi3
-
-    self.sigma3.append(tempSigma3)
-
-    differenceOfmiu3=tempSigma3*kappa*w2*delta2/2
-    self.miu3.append(self.miu3[self.step-1]+differenceOfmiu3)
-    
-  def miu2Update(self): 
-    sigma2P=self.sigma2[self.step-1]+math.exp(self.kappa*self.miu3[self.step-1]+self.omega)
-    
-    miu1P = sigmoid(self.miu2[self.step-1])
-    self.miu1P.append(miu1P)
-    
-    sigma1P = self.miu1P[self.step-1]*(1-self.miu1P[self.step-1])
-
-    tempSigma2 = 1/(1/sigma2P+sigma1P)
-    self.sigma2.append(tempSigma2)
-
-    delta1 = rawData[self.step]-self.miu1P[self.step]
-
-    differenceOfmiu2 = tempSigma2*delta1
-
-    self.miu2.append(self.miu2[self.step-1]+differenceOfmiu2)
-  
-  
-  def classUpdate(self):
-    while(self.step<len(rawData)):
-      self.miu2Update()
-      self.miu3Update()
-      self.step+=1
   def output(self):
     return {
-      "mu1_rawData":[rawData[1:]],
-      "mu1_hat":[self.miu1P[1:]],
-      "mu2_3":[self.miu2[1:],self.miu3[1:]],
-      "sigma2_3":[self.sigma2[1:],self.sigma3[1:]]
+      "muhat":self.muhat,
+      "pihat":self.pihat,
+      "sigmahat":self.sigmahat,
+      "mu":self.mu,
+      "pi":self.pi,
+      "sigma":self.sigma,
+      "delta":self.delta,
+      "r":self.r,
+      "w":self.w
     }
 
 if __name__ == '__main__':
   instance =   HGF(1.4,-2.2,0.5)#文章里面这是自由参数，但是可以用一种算法估计出最优的自由参数，暂略
-  instance.classUpdate()
+  instance.update()
 
   ans = instance.output() 
-  length = len(ans["mu1_rawData"][0])
+ # print(ans)
+  length = len(ans["mu"][0,1:])
   x=range(length)
   tempIndex = 0
   y=[]
@@ -140,18 +142,17 @@ if __name__ == '__main__':
     y.append(realP(x[tempIndex]))
     tempIndex += 1
 
-  plt.scatter(x,ans["mu1_rawData"][0])
-  plt.plot(x,ans["mu1_hat"][0])
+  plt.scatter(x,ans["mu"][0,1:])
+  plt.plot(x,ans["muhat"][0,1:])
   plt.plot(x,y)
   plt.show()
 
-  plt.plot(x,ans["mu2_3"][0])
-  
-  plt.plot(x,ans["sigma2_3"][0]) 
+  plt.plot(x,ans["mu"][1,1:])
+  plt.ylim(-4,4)
   plt.show()
 
-  plt.plot(x,ans["mu2_3"][1])
-  plt.plot(x,ans["sigma2_3"][1])
+  plt.plot(x,ans["mu"][2,1:])
+  plt.ylim(-4,4)
   plt.show()
 
     
