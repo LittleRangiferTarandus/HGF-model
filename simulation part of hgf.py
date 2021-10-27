@@ -129,7 +129,7 @@ class HGF:
     }
 
 if __name__ == '__main__':
-  instance =   HGF(1.4,-2.2,0.5)#文章里面这是自由参数，但是可以用一种算法估计出最优的自由参数，暂略
+  instance =   HGF(1.4,-2.2,0.05)#文章里面这是自由参数，但是可以用一种算法估计出最优的自由参数，暂略
   instance.update()
 
   ans = instance.output() 
@@ -144,14 +144,17 @@ if __name__ == '__main__':
 
   plt.scatter(x,ans["mu"][0,1:])
   plt.plot(x,ans["muhat"][0,1:])
+  plt.title("μ1=inputData,μ1hat=s(μ2)")
   plt.plot(x,y)
   plt.show()
 
   plt.plot(x,ans["mu"][1,1:])
+  plt.title("μ2")
   plt.ylim(-4,4)
   plt.show()
 
   plt.plot(x,ans["mu"][2,1:])
+  plt.title("μ3")
   plt.ylim(-4,4)
   plt.show()
 
