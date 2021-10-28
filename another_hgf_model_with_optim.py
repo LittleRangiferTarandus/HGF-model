@@ -148,7 +148,7 @@ class optim:
         #generate a new x in the neighboorhood of x by transform function
         
         while True:
-          xNew=[x[0]+np.random.uniform(low=-0.001,high=+0.001)*T,x[1]+np.random.uniform(low=-0.001,high=+0.001)*T]
+          xNew=[x[0]+np.random.uniform(low=-0.005,high=+0.005)*T,x[1]+np.random.uniform(low=-0.005,high=+0.005)*T]
 
           try:#防止随机出一些越界的变量x，例如math.log和math.exp越界
             yNew=opt.parameterUpdate(xNew[0],xNew[1])
@@ -157,14 +157,10 @@ class optim:
           else :
             break
         
-        print("xOrigin = ")
-        print(x)
-        print("yOrigin = ")
-        print(y)
-        print("xNew = ")
-        print(xNew)
-        print("yNew = ")
-        print(yNew)
+        print("xOrigin = "+str(x))
+        print("yOrigin = "+str(y))
+        print("xNew = "+str(xNew))
+        print("yNew = "+str(yNew))
         print("-----------------------分割线-----------------------\n")
 
         if yNew-y<0:
@@ -187,7 +183,8 @@ if __name__ == '__main__':
   # #opitm👇
   opt = optim()
   opV = opt.SAA()
-  print(opV["y"])
+  print("y = "+str(opV["y"]))
+  print("x = "+str(opV["x"]))
   instance =   HGF(1,opV["x"][0],opV["x"][1])
   instance.update()
   ans = instance.output()
@@ -200,6 +197,13 @@ if __name__ == '__main__':
 
   plt.show()
 
+  plt.plot(x,ans["mu"][1])
+
+  plt.show()
+
+  plt.plot(x,ans["mu"][2])
+  plt.ylim(0,2)
+  plt.show()
   # # #测试simulation和optimization的代码↑
   
 
